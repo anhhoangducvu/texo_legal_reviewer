@@ -107,7 +107,7 @@ if doc_file:
                     # --- DOWNLOAD SECTION ---
                     import io
                     output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         df.to_excel(writer, index=False, sheet_name='Base_Legal_Audit')
                     excel_data = output.getvalue()
                     
