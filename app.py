@@ -84,29 +84,42 @@ with col2:
                         df = DataFrame(audit_legal_status(refs))
                         st.success(f"✅ Đã tìm thấy {len(df)} văn bản pháp quy.")
                         
+                        # --- TỔNG HỢP (METRICS) ---
+                        st.markdown("### 📊 Tổng hợp Căn cứ Pháp lý")
+                        
                         std_rx = "TCVN|QCVN|Tiêu chuẩn|Quy chuẩn|ISO|ASTM|BS|EN|JIS|ASME|QCXDVN|TCXDVN|QĐ"
                         groups = [
                             ("Luật", "Luật"), 
                             ("Nghị định", "Nghị định"), 
                             ("Thông tư", "Thông tư"), 
-                            (std_rx, "Quy chuẩn/Tiêu chuẩn/Kỹ thuật")
+                            (std_rx, "Quy chuẩn/Tiêu chuẩn")
                         ]
                         
+                        m_cols = st.columns(len(groups))
                         collected_indices = []
-                        for key, label in groups:
+                        group_data = []
+
+                        for i, (key, label) in enumerate(groups):
                             sub = df[df['symbol'].str.contains(key, case=False, na=False, regex=True)]
+                            m_cols[i].metric(label, f"{len(sub)} VB")
+                            collected_indices.extend(sub.index)
+                            group_data.append((label, sub))
+                        
+                        st.markdown("---")
+                        st.markdown("### 📜 Chi tiết Danh mục")
+
+                        for label, sub in group_data:
                             if not sub.empty:
-                                collected_indices.extend(sub.index)
-                                with st.expander(f"📜 {label.upper()} ({len(sub)})", expanded=True):
+                                with st.expander(f"📂 {label.upper()} ({len(sub)})", expanded=False):
                                     st.dataframe(sub[["symbol", "link"]], 
-                                               column_config={"link": st.column_config.LinkColumn("Tra cứu")}, 
+                                               column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
                                                hide_index=True, use_container_width=True)
                         
                         other_df = df.drop(index=list(set(collected_indices)))
                         if not other_df.empty:
-                            with st.expander(f"📜 NHÓM KHÁC ({len(other_df)})"):
+                            with st.expander(f"📂 NHÓM KHÁC ({len(other_df)})", expanded=False):
                                 st.dataframe(other_df[["symbol", "link"]], 
-                                           column_config={"link": st.column_config.LinkColumn("Tra cứu")}, 
+                                           column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
                                            hide_index=True, use_container_width=True)
                     else:
                         st.warning("🧐 Không tìm thấy căn cứ pháp lý nào trong tài liệu.")

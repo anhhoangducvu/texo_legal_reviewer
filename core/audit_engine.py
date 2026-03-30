@@ -43,8 +43,8 @@ def audit_legal_status(refs):
     """
     results = []
     for ref in refs:
-        # Sử dụng Google Search ưu tiên trang thuvienphapluat.vn để đảm bảo luôn tìm thấy văn bản sống
-        search_query = f"{ref} thuvienphapluat.vn"
+        # Sử dụng Google Search ưu tiên trang thuvienphapluat.vn và kiểm tra hiệu lực
+        search_query = f"{ref} thuvienphapluat.vn tình trạng hiệu lực"
         search_link = f"https://www.google.com/search?q={search_query.replace(' ', '+')}"
         results.append({
             "symbol": ref,
