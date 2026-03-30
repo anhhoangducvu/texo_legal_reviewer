@@ -152,6 +152,6 @@ if doc_file:
             except Exception as e:
                 st.error(f"❌ Lỗi rà soát: {e}")
 else:
-    st.markdown("<div style='height: 150px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 500;'>Vui lòng tải lên hồ sơ (.docx) để bắt đầu phân tích</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; color: #64748b; font-weight: 500; padding: 40px;'>AI đang sẵn sàng. Hãy tải hồ sơ rà soát ở phía trên để bắt đầu bóc tách dữ liệu...</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='footer'>TEXO Engineering Department | Legal Audit Intelligence | Hoàng Đức Vũ</div>", unsafe_allow_html=True)
