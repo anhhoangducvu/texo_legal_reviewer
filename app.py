@@ -81,6 +81,8 @@ if doc_file:
                 refs = extract_legal_references(ta)
                 if refs:
                     df = DataFrame(audit_legal_status(refs))
+                    # Đổi tên cột ngay từ đầu để đồng bộ
+                    df = df.rename(columns={"symbol": "Mã hiệu tài liệu", "link": "Tra cứu hiệu lực"})
                     st.success(f"✅ Đã tìm thấy {len(df)} văn bản pháp quy.")
                     
                     # --- TỔNG HỢP (METRICS) ---
@@ -99,7 +101,7 @@ if doc_file:
                     group_data = []
 
                     for i, (key, label) in enumerate(groups):
-                        sub = df[df['symbol'].str.contains(key, case=False, na=False, regex=True)]
+                        sub = df[df['Mã hiệu tài liệu'].str.contains(key, case=False, na=False, regex=True)]
                         m_cols[i].metric(label, f"{len(sub)} VB")
                         collected_indices.extend(sub.index)
                         group_data.append((label, sub))
@@ -118,7 +120,7 @@ if doc_file:
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         )
                     except ModuleNotFoundError:
-                        st.warning("⚠️ Không tìm thấy thư viện Excel. Đang cung cấp bản dự phòng CSV...")
+                        st.warning("⚠️ Không tìm thấy thư viện Excel trên server. Đang lấy bản dự phòng CSV...")
                         csv_output = df.to_csv(index=False, sep=',', encoding='utf-8-sig') # Use utf-8-sig for Excel compatibility
                         st.download_button(
                             label="📥 TẢI BÁO CÁO DỰ PHÒNG (CSV)",
@@ -133,15 +135,15 @@ if doc_file:
                     for label, sub in group_data:
                         if not sub.empty:
                             with st.expander(f"📂 {label.upper()} ({len(sub)})", expanded=False):
-                                st.dataframe(sub[["symbol", "link"]], 
-                                           column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
+                                st.dataframe(sub, 
+                                           column_config={"Tra cứu hiệu lực": st.column_config.LinkColumn("Bấm để tra cứu")}, 
                                            hide_index=True, use_container_width=True)
                     
                     other_df = df.drop(index=list(set(collected_indices)))
                     if not other_df.empty:
                         with st.expander(f"📂 NHÓM KHÁC ({len(other_df)})", expanded=False):
-                            st.dataframe(other_df[["symbol", "link"]], 
-                                       column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
+                            st.dataframe(other_df, 
+                                       column_config={"Tra cứu hiệu lực": st.column_config.LinkColumn("Bấm để tra cứu")}, 
                                        hide_index=True, use_container_width=True)
                 else:
                     st.warning("🧐 Không tìm thấy căn cứ pháp lý nào trong tài liệu.")
