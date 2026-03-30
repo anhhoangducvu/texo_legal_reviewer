@@ -106,17 +106,26 @@ if doc_file:
                     
                     # --- DOWNLOAD SECTION ---
                     import io
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df.to_excel(writer, index=False, sheet_name='Base_Legal_Audit')
-                    excel_data = output.getvalue()
-                    
-                    st.download_button(
-                        label="📥 TẢI BÁO CÁO RÀ SOÁT (EXCEL)",
-                        data=excel_data,
-                        file_name=f"Bao_cao_Phap_ly_{doc_file.name.replace('.docx', '')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+                    try:
+                        output = io.BytesIO()
+                        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                            df.to_excel(writer, index=False, sheet_name='Base_Legal_Audit')
+                        excel_data = output.getvalue()
+                        st.download_button(
+                            label="📥 TẢI BÁO CÁO RÀ SOÁT (EXCEL)",
+                            data=excel_data,
+                            file_name=f"Bao_cao_Phap_ly_{doc_file.name.replace('.docx', '')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                    except ModuleNotFoundError:
+                        st.warning("⚠️ Không tìm thấy thư viện Excel. Đang cung cấp bản dự phòng CSV...")
+                        csv_output = df.to_csv(index=False, sep=',', encoding='utf-8-sig') # Use utf-8-sig for Excel compatibility
+                        st.download_button(
+                            label="📥 TẢI BÁO CÁO DỰ PHÒNG (CSV)",
+                            data=csv_output,
+                            file_name=f"Bao_cao_Phap_ly_{doc_file.name.replace('.docx', '')}.csv",
+                            mime="text/csv"
+                        )
                     
                     st.markdown("---")
                     st.markdown("### 📜 Chi tiết Danh mục")
