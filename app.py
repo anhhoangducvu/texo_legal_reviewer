@@ -62,72 +62,71 @@ if not check_password(): st.stop()
 # --- MAIN ---
 st.markdown("<div class='main-header'>🏛️ RÀ SOÁT VĂN BẢN PHÁP LUẬT & TIÊU CHUẨN</div>", unsafe_allow_html=True)
 
-col1, col2 = st.columns([1, 1], gap="large")
+# --- UPLOAD SECTION ---
+st.markdown("### 📥 Tải hồ sơ rà soát")
+doc_file = st.file_uploader("Tải hồ sơ (.docx) để AI bóc tách căn cứ pháp lý", type=["docx"])
 
-with col1:
-    st.markdown("### 📥 Tải hồ sơ rà soát")
-    doc_file = st.file_uploader("Tải hồ sơ (.docx)", type=["docx"])
+st.markdown("---")
 
-with col2:
-    st.markdown("### 📊 Kết quả Phân tích")
-    if doc_file:
-        st.info(f"Đã nhận hồ sơ: **{doc_file.name}**")
-        if st.button("🚀 BẮT ĐẦU RÀ SOÁT PHÁP LÝ"):
-            with st.spinner("AI đang bóc tách căn cứ pháp lý..."):
-                try:
-                    ta = f"t_{doc_file.name}"
-                    with open(ta, "wb") as f:
-                        f.write(doc_file.getbuffer())
+# --- ANALYSIS SECTION ---
+if doc_file:
+    st.info(f"📁 Đã nhận hồ sơ: **{doc_file.name}**")
+    if st.button("🚀 BẮT ĐẦU RÀ SOÁT PHÁP LÝ"):
+        with st.spinner("AI đang bóc tách căn cứ pháp lý..."):
+            try:
+                ta = f"t_{doc_file.name}"
+                with open(ta, "wb") as f:
+                    f.write(doc_file.getbuffer())
+                
+                refs = extract_legal_references(ta)
+                if refs:
+                    df = DataFrame(audit_legal_status(refs))
+                    st.success(f"✅ Đã tìm thấy {len(df)} văn bản pháp quy.")
                     
-                    refs = extract_legal_references(ta)
-                    if refs:
-                        df = DataFrame(audit_legal_status(refs))
-                        st.success(f"✅ Đã tìm thấy {len(df)} văn bản pháp quy.")
-                        
-                        # --- TỔNG HỢP (METRICS) ---
-                        st.markdown("### 📊 Tổng hợp Căn cứ Pháp lý")
-                        
-                        std_rx = "TCVN|QCVN|Tiêu chuẩn|Quy chuẩn|ISO|ASTM|BS|EN|JIS|ASME|QCXDVN|TCXDVN|QĐ"
-                        groups = [
-                            ("Luật", "Luật"), 
-                            ("Nghị định", "Nghị định"), 
-                            ("Thông tư", "Thông tư"), 
-                            (std_rx, "Quy chuẩn/Tiêu chuẩn")
-                        ]
-                        
-                        m_cols = st.columns(len(groups))
-                        collected_indices = []
-                        group_data = []
+                    # --- TỔNG HỢP (METRICS) ---
+                    st.markdown("### 📊 Tổng hợp Căn cứ Pháp lý")
+                    
+                    std_rx = "TCVN|QCVN|Tiêu chuẩn|Quy chuẩn|ISO|ASTM|BS|EN|JIS|ASME|QCXDVN|TCXDVN|QĐ"
+                    groups = [
+                        ("Luật", "Luật"), 
+                        ("Nghị định", "Nghị định"), 
+                        ("Thông tư", "Thông tư"), 
+                        (std_rx, "Quy chuẩn/Tiêu chuẩn")
+                    ]
+                    
+                    m_cols = st.columns(len(groups))
+                    collected_indices = []
+                    group_data = []
 
-                        for i, (key, label) in enumerate(groups):
-                            sub = df[df['symbol'].str.contains(key, case=False, na=False, regex=True)]
-                            m_cols[i].metric(label, f"{len(sub)} VB")
-                            collected_indices.extend(sub.index)
-                            group_data.append((label, sub))
-                        
-                        st.markdown("---")
-                        st.markdown("### 📜 Chi tiết Danh mục")
+                    for i, (key, label) in enumerate(groups):
+                        sub = df[df['symbol'].str.contains(key, case=False, na=False, regex=True)]
+                        m_cols[i].metric(label, f"{len(sub)} VB")
+                        collected_indices.extend(sub.index)
+                        group_data.append((label, sub))
+                    
+                    st.markdown("---")
+                    st.markdown("### 📜 Chi tiết Danh mục")
 
-                        for label, sub in group_data:
-                            if not sub.empty:
-                                with st.expander(f"📂 {label.upper()} ({len(sub)})", expanded=False):
-                                    st.dataframe(sub[["symbol", "link"]], 
-                                               column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
-                                               hide_index=True, use_container_width=True)
-                        
-                        other_df = df.drop(index=list(set(collected_indices)))
-                        if not other_df.empty:
-                            with st.expander(f"📂 NHÓM KHÁC ({len(other_df)})", expanded=False):
-                                st.dataframe(other_df[["symbol", "link"]], 
+                    for label, sub in group_data:
+                        if not sub.empty:
+                            with st.expander(f"📂 {label.upper()} ({len(sub)})", expanded=False):
+                                st.dataframe(sub[["symbol", "link"]], 
                                            column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
                                            hide_index=True, use_container_width=True)
-                    else:
-                        st.warning("🧐 Không tìm thấy căn cứ pháp lý nào trong tài liệu.")
                     
-                    if os.path.exists(ta): os.remove(ta)
-                except Exception as e:
-                    st.error(f"❌ Lỗi rà soát: {e}")
-    else:
-        st.markdown("<div style='height: 200px; border: 2px dashed #333; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #666;'>Tải lên văn bản để rà soát các văn bản dẫn chiếu</div>", unsafe_allow_html=True)
+                    other_df = df.drop(index=list(set(collected_indices)))
+                    if not other_df.empty:
+                        with st.expander(f"📂 NHÓM KHÁC ({len(other_df)})", expanded=False):
+                            st.dataframe(other_df[["symbol", "link"]], 
+                                       column_config={"link": st.column_config.LinkColumn("Tra cứu hiệu lực")}, 
+                                       hide_index=True, use_container_width=True)
+                else:
+                    st.warning("🧐 Không tìm thấy căn cứ pháp lý nào trong tài liệu.")
+                
+                if os.path.exists(ta): os.remove(ta)
+            except Exception as e:
+                st.error(f"❌ Lỗi rà soát: {e}")
+else:
+    st.markdown("<div style='height: 150px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 500;'>Vui lòng tải lên hồ sơ (.docx) để bắt đầu phân tích</div>", unsafe_allow_html=True)
 
 st.markdown("<div class='footer'>TEXO Engineering Department | Legal Audit Intelligence | Hoàng Đức Vũ</div>", unsafe_allow_html=True)
