@@ -104,6 +104,20 @@ if doc_file:
                         collected_indices.extend(sub.index)
                         group_data.append((label, sub))
                     
+                    # --- DOWNLOAD SECTION ---
+                    import io
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        df.to_excel(writer, index=False, sheet_name='Base_Legal_Audit')
+                    excel_data = output.getvalue()
+                    
+                    st.download_button(
+                        label="📥 TẢI BÁO CÁO RÀ SOÁT (EXCEL)",
+                        data=excel_data,
+                        file_name=f"Bao_cao_Phap_ly_{doc_file.name.replace('.docx', '')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                    
                     st.markdown("---")
                     st.markdown("### 📜 Chi tiết Danh mục")
 
