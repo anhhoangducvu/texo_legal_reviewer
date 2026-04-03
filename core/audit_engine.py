@@ -3,39 +3,58 @@ import re
 
 def extract_legal_references(input_path):
     """
-    Truy quét toàn bộ văn bản để tìm các mã hiệu Nghị định, Thông tư, Luật...
-    Cải tiến Regex để bắt trọn mọi hậu tố và các loại văn bản mới.
+    Truy quét toàn diện file Word bao gồm: Paragraphs, Tables, Headers, Footers.
+    Sử dụng Regex Unicode để không bỏ sót văn bản tiếng Việt.
     """
     doc = docx.Document(input_path)
     full_text = []
+
+    # 1. Quét nội dung chính
     for para in doc.paragraphs:
         full_text.append(para.text)
+    
+    # 2. Quét bảng biểu
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
                 full_text.append(cell.text)
+                
+    # 3. Quét Header & Footer (Nơi thường để căn cứ pháp lý)
+    for section in doc.sections:
+        for header_para in section.header.paragraphs:
+            full_text.append(header_para.text)
+        for footer_para in section.footer.paragraphs:
+            full_text.append(footer_para.text)
     
     text = "\n".join(full_text)
     
-    # Regex nâng cao: Tổng quát hóa để tránh bỏ sót
+    # Bộ Regex "Siêu lọc" - Hỗ trợ đầy đủ tiếng Việt và cấu trúc phức tạp
     patterns = [
-        # Thông tư, Nghị định, Quyết định (Bắt mọi hậu tố viết hoa như TT-BGDĐT, TT-BLĐTBXH...)
-        r"(?:Nghị định|Thông tư|Quyết định)(?:\s+số)?\s+\d{1,5}/\d{4}/[A-Z0-9-]+\b",
-        # Luật (Dạng số hiệu: Luật số 50/2014/QH13)
+        # Nghị định, Thông tư, Quyết định, Nghị quyết (Hỗ trợ Unicode cho NĐ-CP, TT-BXD...)
+        r"(?:Nghị định|Thông tư|Quyết định|Nghị quyết)(?:\s+số)?\s+\d{1,5}/\d{4}/[^\s,;.]+?\b",
+        
+        # Luật có tên dài ở giữa (Ví dụ: Luật Xây dựng ... số 50/2014/QH13)
+        # Bắt từ "Luật" đến khi thấy "số x/y/QH"
+        r"Luật[^,;]+?số\s+\d{1,5}/\d{4}/QH\d{1,2}\b",
+        
+        # Luật trực tiếp (Ví dụ: Luật số 50/2014/QH13)
         r"Luật(?:\s+số)?\s+\d{1,5}/\d{4}/QH\d{1,2}\b",
-        # Luật (Dạng tên gọi: Luật Xây dựng 2014) - Bắt cụm từ bắt đầu bằng chữ hoa và kết thúc bằng năm
+        
+        # Luật theo tên (Ví dụ: Luật Xây dựng 2014)
         r"Luật\s+[A-ZÀ-Ỹ][a-zà-ỹ\s\w]+[12]\d{3}\b",
-        # Tiêu chuẩn, Quy chuẩn (TCVN, QCVN, TCXDVN)
-        r"(?:TCVN|TCXDVN|QCVN|TCVN/XD)\s+\d+[:\-\s][12]\d{3}(?:/[A-Z0-9-]+)?",
-        # Nghị quyết
-        r"Nghị quyết(?:\s+số)?\s+\d+/\d{4}/[A-Z0-9-]+\b"
+        
+        # Tiêu chuẩn, Quy chuẩn (Bao gồm cả TCVN/XD, QCVN...)
+        r"(?:TCVN|TCXDVN|QCVN|TCVN/XD|QCXDVN)\s+\d+[:\-\s][12]\d{3}(?:/[^\s,;.]+)?\b"
     ]
     
     found_refs = []
     for p in patterns:
-        matches = re.finditer(p, text, flags=re.IGNORECASE)
+        matches = re.finditer(p, text, flags=re.IGNORECASE | re.UNICODE)
         for m in matches:
-            found_refs.append(m.group(0))
+            ref = m.group(0).strip()
+            # Làm sạch các ký tự dư thừa ở cuối
+            ref = re.sub(r'[\s.;,]+$', '', ref)
+            found_refs.append(ref)
     
     # Loại bỏ trùng lặp và sắp xếp
     unique_refs = sorted(list(set(found_refs)))
@@ -43,16 +62,13 @@ def extract_legal_references(input_path):
 
 def audit_legal_status(refs):
     """
-    Phân loại nguồn tra cứu: 
-    - Tiêu chuẩn/Quy chuẩn -> tieuchuan.vsqi.gov.vn
-    - Luật/Thông tư/Nghị định -> thuvienphapluat.vn
+    Phân loại nguồn tra cứu chính xác.
     """
     results = []
     for ref in refs:
-        # Xác định xem có phải là Tiêu chuẩn/Quy chuẩn hay không
-        is_standard = any(std in ref.upper() for std in ["TCVN", "QCVN", "TCXDVN", "TCVN/XD"])
+        # Tiêu chuẩn/Quy chuẩn -> VSQI
+        is_standard = any(std in ref.upper() for std in ["TCVN", "QCVN", "TCXDVN", "TCVN/XD", "QCXDVN", "TIÊU CHUẨN", "QUY CHUẨN"])
         
-        # Chọn domain tra cứu phù hợp
         target_domain = "tieuchuan.vsqi.gov.vn" if is_standard else "thuvienphapluat.vn"
         
         search_query = f"{ref} {target_domain} tình trạng hiệu lực"
