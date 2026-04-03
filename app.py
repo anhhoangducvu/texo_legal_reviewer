@@ -88,11 +88,12 @@ if doc_file:
                     # --- TỔNG HỢP (METRICS) ---
                     st.markdown("### 📊 Tổng hợp Căn cứ Pháp lý")
                     
-                    std_rx = "TCVN|QCVN|Tiêu chuẩn|Quy chuẩn|ISO|ASTM|BS|EN|JIS|ASME|QCXDVN|TCXDVN|QĐ"
+                    std_rx = "TCVN|QCVN|Tiêu chuẩn|Quy chuẩn|ISO|ASTM|BS|EN|JIS|ASME|QCXDVN|TCXDVN|TCVN/XD"
                     groups = [
                         ("Luật", "Luật"), 
                         ("Nghị định", "Nghị định"), 
                         ("Thông tư", "Thông tư"), 
+                        ("Quyết định", "Quyết định"),
                         (std_rx, "Quy chuẩn/Tiêu chuẩn")
                     ]
                     

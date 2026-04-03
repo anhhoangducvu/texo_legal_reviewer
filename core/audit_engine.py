@@ -4,7 +4,7 @@ import re
 def extract_legal_references(input_path):
     """
     Truy quét toàn bộ văn bản để tìm các mã hiệu Nghị định, Thông tư, Luật...
-    Ví dụ: 10/2021/NĐ-CP, 06/2021/TT-BXD, Luật Xây dựng 2014...
+    Cải tiến Regex để bắt trọn mọi hậu tố và các loại văn bản mới.
     """
     doc = docx.Document(input_path)
     full_text = []
@@ -17,13 +17,18 @@ def extract_legal_references(input_path):
     
     text = "\n".join(full_text)
     
-    # Regex nâng cao (dùng non-capturing groups để lấy full match)
+    # Regex nâng cao: Tổng quát hóa để tránh bỏ sót
     patterns = [
-        r"(?:Nghị định|Thông tư)(?:\s+số)?\s+\d{1,5}/\d{4}/(?:NĐ-CP|TT-BXD|TT-BTC|QH\d{1,2}|TT-BKHĐT|TT-BNV|NĐ-TTg|TT-BYT|TT-BNNPTNT|TT-BXD)\b",
+        # Thông tư, Nghị định, Quyết định (Bắt mọi hậu tố viết hoa như TT-BGDĐT, TT-BLĐTBXH...)
+        r"(?:Nghị định|Thông tư|Quyết định)(?:\s+số)?\s+\d{1,5}/\d{4}/[A-Z0-9-]+\b",
+        # Luật (Dạng số hiệu: Luật số 50/2014/QH13)
         r"Luật(?:\s+số)?\s+\d{1,5}/\d{4}/QH\d{1,2}\b",
-        r"Quyết định(?:\s+số)?\s+\d+/\d{4}/(?:QĐ-TTg|QĐ-UBND|QĐ-BXD)\b",
-        r"(?:TCVN|TCXDVN|QCVN)\s+\d+[:\s][12]\d{3}(?:/BXD|/BTNMT|/BCA|/BCT)?",
-        r"Luật\s+[\w\s\d]+[12]\d{3}"
+        # Luật (Dạng tên gọi: Luật Xây dựng 2014) - Bắt cụm từ bắt đầu bằng chữ hoa và kết thúc bằng năm
+        r"Luật\s+[A-ZÀ-Ỹ][a-zà-ỹ\s\w]+[12]\d{3}\b",
+        # Tiêu chuẩn, Quy chuẩn (TCVN, QCVN, TCXDVN)
+        r"(?:TCVN|TCXDVN|QCVN|TCVN/XD)\s+\d+[:\-\s][12]\d{3}(?:/[A-Z0-9-]+)?",
+        # Nghị quyết
+        r"Nghị quyết(?:\s+số)?\s+\d+/\d{4}/[A-Z0-9-]+\b"
     ]
     
     found_refs = []
@@ -38,13 +43,19 @@ def extract_legal_references(input_path):
 
 def audit_legal_status(refs):
     """
-    Giai đoạn sau: Kết nối API hoặc Tra cứu Web để kiểm tra trạng thái.
-    Hiện tại: Trả về danh sách để người dùng đối soát nhanh qua link.
+    Phân loại nguồn tra cứu: 
+    - Tiêu chuẩn/Quy chuẩn -> tieuchuan.vsqi.gov.vn
+    - Luật/Thông tư/Nghị định -> thuvienphapluat.vn
     """
     results = []
     for ref in refs:
-        # Sử dụng Google Search ưu tiên trang thuvienphapluat.vn và kiểm tra hiệu lực
-        search_query = f"{ref} thuvienphapluat.vn tình trạng hiệu lực"
+        # Xác định xem có phải là Tiêu chuẩn/Quy chuẩn hay không
+        is_standard = any(std in ref.upper() for std in ["TCVN", "QCVN", "TCXDVN", "TCVN/XD"])
+        
+        # Chọn domain tra cứu phù hợp
+        target_domain = "tieuchuan.vsqi.gov.vn" if is_standard else "thuvienphapluat.vn"
+        
+        search_query = f"{ref} {target_domain} tình trạng hiệu lực"
         search_link = f"https://www.google.com/search?q={search_query.replace(' ', '+')}"
         results.append({
             "symbol": ref,
