@@ -28,22 +28,23 @@ def extract_legal_references(input_path):
     
     text = "\n".join(full_text)
     
-    # Bộ Regex "Siêu lọc" - Hỗ trợ đầy đủ tiếng Việt và cấu trúc phức tạp
+    # Bộ Regex "Siêu lọc" - Cực kỳ linh hoạt với mọi cấu trúc tiếng Việt
     patterns = [
-        # Nghị định, Thông tư, Quyết định, Nghị quyết (Hỗ trợ Unicode cho NĐ-CP, TT-BXD...)
-        r"(?:Nghị định|Thông tư|Quyết định|Nghị quyết)(?:\s+số)?\s+\d{1,5}/\d{4}/[^\s,;.]+?\b",
+        # 1. Nghị định, Thông tư, Quyết định, Nghị quyết, Văn bản hợp nhất
+        # Bắt từ khóa -> Số hiệu -> Hậu tố (Hỗ trợ Unicode như NĐ-CP, TT-BXD...)
+        r"(?:Nghị định|Thông tư|Quyết định|Nghị quyết|VBHN)(?:\s+số)?\s+\d{1,5}/\d{4}/[^\s,;]+",
         
-        # Luật có tên dài ở giữa (Ví dụ: Luật Xây dựng ... số 50/2014/QH13)
-        # Bắt từ "Luật" đến khi thấy "số x/y/QH"
-        r"Luật[^,;]+?số\s+\d{1,5}/\d{4}/QH\d{1,2}\b",
+        # 2. Luật kèm theo tên và số hiệu (Hỗ trợ khoảng cách xa và dấu phẩy ở giữa)
+        # Ví dụ: Luật Xây dựng ... số 50/2014/QH13
+        r"Luật[\s\wÀ-Ỹà-ỹ,]+?số\s+\d{1,5}/\d{4}/QH\d{1,2}\b",
         
-        # Luật trực tiếp (Ví dụ: Luật số 50/2014/QH13)
+        # 3. Luật trực tiếp (Ví dụ: Luật số 10/2012/QH13)
         r"Luật(?:\s+số)?\s+\d{1,5}/\d{4}/QH\d{1,2}\b",
         
-        # Luật theo tên (Ví dụ: Luật Xây dựng 2014)
+        # 4. Luật theo tên và năm (Ví dụ: Luật Xây dựng 2014)
         r"Luật\s+[A-ZÀ-Ỹ][a-zà-ỹ\s\w]+[12]\d{3}\b",
         
-        # Tiêu chuẩn, Quy chuẩn (Bao gồm cả TCVN/XD, QCVN...)
+        # 5. Tiêu chuẩn, Quy chuẩn (TCVN, QCVN, TCXDVN, TCVN/XD...)
         r"(?:TCVN|TCXDVN|QCVN|TCVN/XD|QCXDVN)\s+\d+[:\-\s][12]\d{3}(?:/[^\s,;.]+)?\b"
     ]
     
@@ -52,8 +53,9 @@ def extract_legal_references(input_path):
         matches = re.finditer(p, text, flags=re.IGNORECASE | re.UNICODE)
         for m in matches:
             ref = m.group(0).strip()
-            # Làm sạch các ký tự dư thừa ở cuối
-            ref = re.sub(r'[\s.;,]+$', '', ref)
+            # Làm sạch kỹ hơn các ký tự dư thừa ở đầu/cuối
+            ref = re.sub(r'^[-—\t\s]+', '', ref) # Bỏ dấu gạch đầu dòng
+            ref = re.sub(r'[\s.;,]+$', '', ref) # Bỏ dấu chấm phẩy cuối
             found_refs.append(ref)
     
     # Loại bỏ trùng lặp và sắp xếp
