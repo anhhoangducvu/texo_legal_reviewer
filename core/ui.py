@@ -28,9 +28,6 @@ header[data-testid="stHeader"] {background: transparent;}
 .kpi .l {font-weight:600; color:#1F3864;} .kpi .s {font-size:.8rem; color:#595959;}
 .ket-luan {border-left:6px solid; padding:10px 14px; border-radius:4px; margin:8px 0 14px 0; color:#1a1a1a;}
 .ai-badge {display:inline-block; padding:3px 10px; border-radius:999px; font-size:.82rem; font-weight:600;}
-@media (prefers-color-scheme: dark) {
-  .texo-head .t1 {color:#E6ECF7;} .texo-head .t2 {color:#B8C2D3;}
-}
 </style>
 """
 COLORS = {"red": ("#C00000", "#FDE4E1"), "orange": ("#C45911", "#FFF1DE"), "green": ("#2E7D32", "#E4F3E6"),

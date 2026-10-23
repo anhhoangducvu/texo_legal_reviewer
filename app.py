@@ -26,8 +26,8 @@ SAVED_KEY_FILE = APP_DIR / ".secrets_local.json"
 MAX_FILES = 30
 
 TITLE = "Rà soát căn cứ pháp lý & tiêu chuẩn"
-ui.setup("TEXO Legal Reviewer", "⚖️")
-ui.gate("TEXO Legal Reviewer")
+ui.setup("TEXO · Rà soát căn cứ pháp lý & tiêu chuẩn", "⚖️")
+ui.gate("Rà soát căn cứ pháp lý")
 ui.header(TITLE, "Phòng Kỹ thuật · Trích xuất Luật, Nghị định, Thông tư, tiêu chuẩn – quy chuẩn từ hồ sơ Word/PDF")
 
 
@@ -133,7 +133,7 @@ with st.sidebar:
         ui.badge("Chế độ quy tắc (không AI)", "grey")
     st.caption("")
     ui.logout_button()
-    st.caption(f"TEXO Legal Reviewer v{APP_VERSION} · Xây dựng: Hoàng Đức Vũ")
+    st.caption(f"Rà soát căn cứ pháp lý v{APP_VERSION} · Xây dựng: Hoàng Đức Vũ")
 
 # =============================================================================== TRANG CHỦ
 with st.expander("📘 Hướng dẫn sử dụng"):
