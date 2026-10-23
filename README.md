@@ -1,4 +1,4 @@
-# ⚖️ TEXO Legal Reviewer v2
+# ⚖️ TEXO Legal Reviewer v2.1
 
 **Rà soát căn cứ pháp lý & tiêu chuẩn trong hồ sơ** – Phòng Kỹ thuật, Công ty CP TEXO Tư vấn và Đầu tư.
 
@@ -18,6 +18,10 @@ thành **danh mục**, **ma trận văn bản × file** và **báo cáo Excel** 
 | AI | – | Tuỳ chọn: bắt sót + chuẩn hoá + nhận xét hiệu lực (Claude / Gemini / OpenAI / tương thích OpenAI) |
 | Giao diện | Một phần tiếng Việt | Hoàn toàn tiếng Việt, có hướng dẫn |
 | Báo cáo | 1 sheet | Excel 4 sheet A4 ngang: Tổng hợp, Danh mục, Ma trận, Chi tiết |
+
+## Bản 2.1 – đồng bộ giao diện
+
+Màn hình đăng nhập và giao diện đồng bộ với bộ app Phòng Kỹ thuật (Đề cương, Khối lượng, Hồ sơ chất lượng): đăng nhập gọn có logo TEXO, thanh bên ẩn trước khi đăng nhập; đầu trang logo + tiêu đề; ô KPI; thanh bên "Trợ lý AI (tùy chọn)" chọn nhà cung cấp hoặc *Không dùng AI*; nút Đăng xuất. Phần giao diện dùng chung nằm ở `core/ui.py`, logo ở `assets/logo_texo.png`.
 
 ## Chạy tại máy
 
@@ -41,7 +45,7 @@ Mật khẩu mặc định: `texo2026` (đổi bằng `APP_PASSWORD` trong `.str
 
 ## Bật AI (tuỳ chọn)
 
-1. Thanh bên trái → **Bật AI** → chọn nhà cung cấp → dán API key (loại *tương thích OpenAI* phải điền Base URL, vd `https://openrouter.ai/api/v1`).
+1. Thanh bên trái → **Trợ lý AI (tùy chọn)** → chọn nhà cung cấp → dán API key (loại *tương thích OpenAI* phải điền Base URL, vd `https://openrouter.ai/api/v1`).
 2. Bấm **Lấy danh sách model** → chọn model → **Kiểm tra kết nối**.
 3. Chọn việc giao cho AI:
    - **Bắt sót trích dẫn** – gửi *toàn văn* tài liệu; AI chỉ bổ sung mục quy tắc bỏ sót, mỗi mục được đối chiếu lại nguyên văn (không thấy nguyên văn → gắn ⚠).
@@ -54,6 +58,8 @@ Mật khẩu mặc định: `texo2026` (đổi bằng `APP_PASSWORD` trong `.str
 
 ```
 app.py                 Giao diện Streamlit
+core/ui.py             Đăng nhập, đầu trang, ô KPI dùng chung bộ app P.KT
+assets/logo_texo.png   Logo TEXO
 core/extractors.py     Đọc DOCX (thân, bảng, header/footer, chú thích) và PDF (PyMuPDF, dự phòng pypdf)
 core/rules.py          Bộ quy tắc nhận diện + gộp danh mục + ghi chú kiểm tra
 core/ai_review.py      Lớp AI: bắt sót, chuẩn hoá, nhận xét hiệu lực
@@ -68,3 +74,5 @@ Kiểm thử: `python tests/test_rules.py` và `python tests/test_ai_mock.py`.
 ## Giới hạn hiện tại
 - Chưa OCR PDF scan; chưa đọc `.doc` (Word cũ) – lưu lại thành `.docx`.
 - Luật chỉ ghi tên, không có năm/số hiệu (vd "theo Luật Xây dựng") không được bắt bằng quy tắc – bật AI để bắt sót.
+
+_Người xây dựng: Hoàng Đức Vũ – Phòng Kỹ thuật._
